@@ -1,0 +1,162 @@
+<html>
+<head>
+<title>TBA v0.5</title>
+<meta http-equiv="x-ua-compatible" content="ie=11">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+<script src='https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js'></script>
+<script src='https://cdn.rawgit.com/insaina/TBA-Tracker/master/main.js'></script>
+</head>
+<body>
+	<div class="page-header" style="width:100%;"><center><h3>TBA Tracker <small>v0.5</small></h3></center></div>
+	<div class="container" ng-app="TBA" ng-controller="tbaCtrl">
+		<table style="width:100%">
+			<tr>
+				<td style="width:10px">&nbsp;</td>
+				<td style="width:220px;">
+					<div class="btn btn-primary" ng-click="syncMTP()">
+						<span class="glyphicon glyphicon-refresh"></span>
+						<span> &nbsp; &nbsp; </span>
+						<span>Update</span>
+					</div>
+				</td>
+				<td style="width:250px;">
+					<span style="width:150px" ng-show="(status.progress < 100)">
+						<i><small>{{status.message}}</small></i>
+					</span>
+				</td>
+				<td>
+					<div class="progress" style="width: 100%;background-color: #909090;padding-bottom:0px;margin-bottom:0px" ng-show="(status.progress < 100)">
+						<div class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="{{status.progress}}" aria-valuemin="20" aria-valuemax="100" ng-style="{width:(status.progress+'%')}">
+						</div>
+					</div>
+				</td>
+				<td style="width:150px;text-align:right;">
+					<span>{{roles[0].name}}</span>
+				</td>
+			</tr>
+		</table>
+		<br>
+		<table class="table" style="margin:0px;padding:0px;" ng-repeat="employee in employees">
+			<tr>
+				<td style="width:60px;">
+					<span>
+						<div class="btn btn-primary" ng-click="employee.show=(employee.show)?false:true">
+							<span class="glyphicon glyphicon-triangle-{{(employee.show)?'bottom':'right'}}"></span>
+						</div>
+					</span>
+				</td>
+				<td style="width:60px;">
+					<span>
+						<div class="btn btn-primary" ng-click="syncEmployee(employee.id)">
+							<span class="glyphicon glyphicon-repeat"></span>
+						</div>
+					</span>
+				</td>
+				<td style="vertical-align:middle;width:400px;"><span>{{employee.name}}</span></td>
+				<td style="vertical-align:middle;width:250px"><span ng-show="(employee.status.progress < 100)"><i><small>{{employee.status.message}}</small></i></span></td>
+				<td style="vertical-align:middle;">
+					<div class="progress" style="width: 20em;background-color: #909090;padding-bottom:0px;margin-bottom:0px" ng-show="(employee.status.progress < 100)">
+						<div class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="{{employee.status.progress}}" aria-valuemin="20" aria-valuemax="100" ng-style="{width:(employee.status.progress+'%')}">
+						</div>
+					</div>
+				</td>
+			</tr>
+			<tr ng-show="employee.show" style="background-color:#eee">
+				<td colspan="5">
+					<div class="container">
+						<div class="panel panel-default">
+							<div class="panel-heading">
+								<div class="btn-group">
+									<div class="btn {{(employee.panel == 'MTP' || employee.panel == null)?'btn-primary':''}}" ng-click="employee.panel = 'MTP'">MTP</div>
+									<div class="btn {{(employee.panel == 'ITL')?'btn-primary':''}}" ng-click="employee.panel = 'ITL'">ITL</div>
+									<div class="btn {{(employee.panel == 'Add Trainers')?'btn-primary':''}}" ng-click="employee.panel = 'Add Trainers'" ng-show="(selectedRole.id==29)">Add Trainers</div>
+								</div>
+							</div>
+							<div class="panel-body" ng-show="(employee.panel == 'MTP'||employee.panel == null)">
+								<table class="table">
+									<tr>
+										<td><b>Task Group</b></td>
+										<td><b>Progress</b></td>
+										<td>&nbsp;</td>
+										<td><b>Completed</b></td>
+										<td><b>Loaded</b></td>
+										<td><b>Total</b></td>
+									</tr>
+									<tr ng-repeat="(key,mtp) in employee.mtp" style="vertical-align:center;">
+										<td>{{key}}</td>
+										<td>
+											<span ng-show="(mtp.loaded > 0)">{{Math.round(mtp.completed/mtp.loaded*100)}}%</span>
+										</td>
+										<td>
+											<div class="progress" style="width: 20em;background-color: #909090;padding-bottom:0px;margin-bottom:0px" ng-show="(mtp.loaded > 0)">
+												<div class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" aria-valuenow="{{Math.round(mtp.completed/mtp.loaded*100)}}" aria-valuemin="20" aria-valuemax="100" ng-style="{width: (Math.round(mtp.completed/mtp.loaded*100)+'%')}">
+												&nbsp;
+												</div>
+											</div>
+										</td>
+										<td>{{mtp.completed}}</td>
+										<td>{{mtp.loaded}}</td>
+										<td>{{mtp.total}}</td>
+									</tr>
+								</table>
+							</div>
+							<div class="panel-body" ng-show="(employee.panel == 'ITL')">
+								<p>Last completed task: {{employee.ITL.lastDate | date:'MM/dd/yyyy'}}</p>
+								<table class="table">
+									<tr>
+										<td></td>
+										<td>Tasks Completed</td>
+										<td>Goal</td>
+										<td></td>
+									</tr>
+									<tr>
+										<td>Last Seven:</td>
+										<td>{{employee.ITL.lastSeven}}</td>
+										<td></td>
+										<td></td>
+									</tr>
+									<tr>
+										<td>Last Thirty:</td>
+										<td>{{employee.ITL.lastThirty}}</td>
+										<td>{{Math.round(employee.ITL.totalLoaded*0.03)}}</td>
+										<td>
+											<div class="progress" style="width: 20em;background-color: #909090;padding-bottom:0px;margin-bottom:0px">
+												<div class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" ng-style="{width: (Math.round(employee.ITL.lastThirty/(employee.ITL.totalLoaded*0.03)*100)+'%')}"></div>
+											</div>
+										</td>
+									</tr>
+									<tr>
+										<td>Total:</td>
+										<td>{{employee.ITL.totalCompleted}}</td>
+										<td>{{employee.ITL.totalLoaded}}</td>
+										<td>
+											<div class="progress" style="width: 20em;background-color: #909090;padding-bottom:0px;margin-bottom:0px">
+												<div class="progress-bar progress-bar-info progress-bar-striped" role="progressbar" ng-style="{width: (Math.round(employee.ITL.totalCompleted/(employee.ITL.totalLoaded)*100)+'%')}"></div>
+											</div>
+										</td>
+									</tr>
+								</table>
+							</div>
+							<div class="panel-body" ng-show="(employee.panel == 'Add Trainers')">
+								<table class="table">
+									<tr>
+										<td>Name</td>
+										<td>Employee Id</id>
+										<td>
+											<div class="btn btn-primary" ng-click="addTrainer(employee.id,employee.availableTrainers)">Add All</div>
+										</td>
+									<tr ng-repeat="trainer in employee.availableTrainers">
+										<td>{{trainer.name}}</td>
+										<td>{{trainer.id}}</td>
+										<td><div class="btn btn-primary" ng-click="addTrainer(employee.id,[trainer])">Add</div></td>
+									</tr>
+								</table>
+							</div>
+						</div>
+					</div>
+				</td>
+			</tr>
+		</table>
+	</div>
+</body>
+</html>

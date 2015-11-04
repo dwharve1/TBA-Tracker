@@ -4,6 +4,7 @@ app.controller('tbaCtrl',function($scope){
 	var JSONFILE = 'tba.json';
 	$scope.Math = window.Math;
 	
+	//Read in saved JSON data, or create the file if it doesn't exist
 	var fso = new ActiveXObject("Scripting.FileSystemObject");
 	var f = fso.OpenTextFile(JSONFILE, 1, true);
 	var data = null;
@@ -12,36 +13,53 @@ app.controller('tbaCtrl',function($scope){
 	}
 	f.close();
 	
+	//Parse saved JSON data into objects
 	$scope.employees = (data != null)?(data.hasOwnProperty('employees'))?data.employees:[]:[];
 	$scope.taskGroups = (data != null)?(data.hasOwnProperty('mtp'))?data.mtp:[]:[];
 	data = null;
 	f = null;
 	
+	//Declare
 	$scope.roles = [];
 	$scope.selectedRole = {};
 	$scope.loggedIn = false;
 	
+	//Obtains a list of employees then loops and calls sync on each employee individually
 	$scope.syncEmployees = function(cb){
+		//Check if logged in, if not, call login function with a call back to syncEmployees to start this function again
 		if(!$scope.loggedIn){$scope.login(function(obj){if(obj.progress == 100){$scope.syncEmployees(cb);}});return null;}
+		
+		//Clear out old employee data
 		$scope.employees = [];
+		
 		var axo = new XMLHttpRequest();
+		
+		//Requests 'Select Employee' page that contains a list of employees that are viewable by the user
 		axo.onreadystatechange = function(){
 			if(axo.readyState == 4){
+				
+				//Parse users employe ID and name
 				if(axo.responseText.split("employeeId\" value=\"").length > 1){
 					$scope.employees.push({
+						//Parsing is page dependent, if the page changes this will not work
 						id: axo.responseText.split("employeeId\" value=\"")[1].split("\">")[0], 
 						name: axo.responseText.toString().match(/\n\s\n\s\n\s\w+,\s\w+\s\w\s\n/)[0].match(/\w+,\s\w+\s\w/)[0], 
 						tasks: []
 					});
 				}
+				
+				//Loop through and parse each employee's ID and name
 				var empsels = axo.responseText.split("empsel");
 				for(var i=1;i<empsels.length;i++){
 					$scope.employees.push({
+						//Parsing is page dependent, if the page changes this will not work
 						name: empsels[i].split("</td>")[1].split(">")[1].replace(/^\s*|\s*$|\n/g,""),
 						id: empsels[i].split("</td>")[2].split(">")[1].replace(/^\s*|\s*$|\n/g,""),
 						tasks: []
 					});
 				}
+				
+				//Loop through each employee and call sync, notify call back of progress/completion
 				var count = 0;
 				for(var i=0;i<$scope.employees.length;i++){
 					$scope.syncEmployee($scope.employees[i].id,function(obj){
